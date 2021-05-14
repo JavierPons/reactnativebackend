@@ -27,7 +27,62 @@ createToken = () => {
 
 }
 
+isUserLogged = (req, res, next) => {
+    console.log(req.headers)
+    if(!req.headers.token){
+        return res.status(403).json({message:"forbidden"})
+    }
+    for(let i = 0; i < loggedSessions.length; i++){
+        if(req.headers.token === loggedSessions[i].token){
+            let now = Date.now();
+            if(now > loggedSessions[i].ttl){
+                loggedSessions.splice(i,1);
+                return res.status(403).json({message:"forbidden"})
+            }
+            loggedSessions[i].ttl = now + time_to_live_diff;
+            req.session = {};
+            req.session.user = loggedSessions[i].user;
+            return next();
+        }
+    }
+    return res.status(403).json({message:"forbidden"})
+}
+
 //LOGIN API
+
+app.post("/register", (req, res) => {
+    if(!req.body){
+        return res.status(400).json({message:"Bad request 1a"});
+    }
+    if(!req.body.password || !req.body.username){
+        return res.status(400).json({message:"Bad request 2a"})
+    }
+    if(req.body.password < 4 || req.body.username < 8 ){
+        return res.status(400).json({message:"Bad request 3a"})
+    }
+
+    for(let i = 0; i < registeredUsers.length; i++){
+        if(req.body.username === registeredUsers[i].username){
+            return res.status(409).json({message:"Username is already in use"})
+        }
+
+    }
+
+    bcrypt.hash(req.body.password,14, (err,hash) => {
+        if(err){
+            return res.status(400).json({message:"Bad request 4a"})
+        }
+        let user = {
+            username: req.body.username,
+            password: hash
+        }
+        registeredUsers.push(user);
+        console.log(registeredUsers);
+        return res.status(201).json({message:"User registered"})
+
+    })
+
+})
 
 app.post("/login", (req,res) => {
     if(!req.body){
