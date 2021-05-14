@@ -2,17 +2,20 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
-
+const mongoose = require("mongoose");
+const config = require("./config");
+const userModel = require("./models/user");
+const sessionModel = require("./models/session");
 
 let app = express();
 
+//DB
+mongoose.connect("mongodb+srv://"+config.username+":"+config.password+"@"+config.url+"/shop?retryWrites=true&w=majority").then( ()=>
+ console.log("Connected to mongoDB"),
+ (error) => console.log("Failed to connect to mongodb. Reason: ", error)
+)
+
 app.use(bodyParser.json());
-
-
-// DB
-
-let registeredUsers = [];
-let loggedSessions = [];
 
 const time_to_live_diff = 360000
 
@@ -61,24 +64,25 @@ app.post("/register", (req, res) => {
         return res.status(400).json({message:"Bad request 3a"})
     }
 
-    for(let i = 0; i < registeredUsers.length; i++){
-        if(req.body.username === registeredUsers[i].username){
-            return res.status(409).json({message:"Username is already in use"})
-        }
-
-    }
-
     bcrypt.hash(req.body.password,14, (err,hash) => {
         if(err){
             return res.status(400).json({message:"Bad request 4a"})
         }
-        let user = {
+        let user =  new userModel({
             username: req.body.username,
             password: hash
-        }
-        registeredUsers.push(user);
-        console.log(registeredUsers);
-        return res.status(201).json({message:"User registered"})
+        })
+       user.save((err,user) => {
+           if(err){
+               console.log("Failed to register new user, ", err);
+               if(err.code === 11000){
+                   return res.status(409).json({message:"Username is already in use"})
+               }
+               return res.status(500).json({message: "Internal server error"})
+           }
+            return res.status(201).json({message:"User registered"})
+       })
+       
 
     })
 
@@ -95,31 +99,40 @@ app.post("/login", (req,res) => {
         return res.status(400).json({message:"Bad Request 3"})
     }
 
-    for(let i = 0; registeredUsers.length; i ++){
-        if(registeredUsers[i].username === req.body.username){
-            bcrypt.compare(req.body.password, registeredUsers[i].password, (err, succes) => {
-                if(err){
-                    return res.status(400).json({message:"Bad Request"})
-                }
-                if(!succes){
-                    return res.status(401).json({message:"Unauthorized"})
-                }
-                let token = createToken();
-                if(!token){
-                    return res.status(400).json({message:"Bad Request 4"})
-                }
-                let now = Date.now();
-                let session = {
-                    user:req.body.username,
-                    ttl: now + time_to_live_diff,
-                    token: token
-                }
-                loggedSessions.push(session)
-                return res.status(200).json({token: token})
-            })
-            return;
+    userModel.findOne({"username":req.body.username}, (err,user) => {
+        if(err){
+            console.log("Login failed. Reason: ", err)
+            return res.status(500).json({message:"Internal server error"})
         }
-    }
+        if(!user){
+            return res.status(401).json({message:"Unauthorized"})
+        }
+        bcrypt.compare(req.body.password, user.password, (error, success) => {
+            if(error){
+                console.log("Compariing password failed. Reason: ", error);
+                return res.status(400).json({message:"Bad reguest a"})
+            }
+            if(!success){
+                return res.status(401).json({message:"Unauthorized"})
+            }
+
+            let token = createToken();
+            let now = Date.now();
+            let session = new sessionModel({
+                user: user.username,
+                ttl: now + time_to_live_diff,
+                token: token
+            })
+
+            session.save(err => {
+                if(err){
+                    console.log("Failed to save session. Reason: ", err);
+                    return res.status(500).json({message:"Internal server error"})
+                }
+                return res.status(200).json({"token": token})
+            })
+        })
+    })
     return res.status(401).json({message:"Unauthorized"});
 
 })
