@@ -19,8 +19,7 @@ app.use(bodyParser.json());
 
 const time_to_live_diff = 360000
 
-app.listen(3009)
-console.log("Running in port 3009")
+
 
 //MIDDLEWARE
 
@@ -129,10 +128,14 @@ app.post("/login", (req,res) => {
                     console.log("Failed to save session. Reason: ", err);
                     return res.status(500).json({message:"Internal server error"})
                 }
-                return res.status(200).json({"token": token})
+                return res.status(200).json({"token":token})
             })
         })
     })
-    return res.status(401).json({message:"Unauthorized"});
+    // return res.status(401).json({message:"Unauthorized"});
 
 })
+
+
+app.listen(process.env.PORT || 3009)
+console.log("Running in port 3009")
