@@ -6,11 +6,16 @@ const mongoose = require("mongoose");
 const config = require("./config");
 const userModel = require("./models/user");
 const sessionModel = require("./models/session");
+const  dotenv = require('dotenv');
+
 
 let app = express();
 
+
+dotenv.config();
+
 //DB
-mongoose.connect("mongodb+srv://"+config.username+":"+config.password+"@"+config.url+"/shop?retryWrites=true&w=majority").then( ()=>
+mongoose.connect("mongodb+srv://"+process.env.DB_USERNAME+":"+process.env.DB_PASSWORD+"@"+process.env.DB_URL+"/shop?retryWrites=true&w=majority").then( ()=>
  console.log("Connected to mongoDB"),
  (error) => console.log("Failed to connect to mongodb. Reason: ", error)
 )
@@ -138,4 +143,4 @@ app.post("/login", (req,res) => {
 
 
 app.listen(process.env.PORT || 3009)
-console.log("Running in port 3009")
+console.log(`Running in port ${process.env.PORT}`)
