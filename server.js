@@ -3,10 +3,10 @@ const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const mongoose = require("mongoose");
-const config = require("./config");
+const  dotenv = require('dotenv');
 const userModel = require("./models/user");
 const sessionModel = require("./models/session");
-const  dotenv = require('dotenv');
+
 
 
 let app = express();
