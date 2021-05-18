@@ -15,7 +15,7 @@ let app = express();
 dotenv.config();
 
 //DB
-mongoose.connect("mongodb+srv://"+process.env.DB_USERNAME+":"+process.env.DB_PASSWORD+"@"+process.env.DB_URL+"/shop?retryWrites=true&w=majority").then( ()=>
+mongoose.connect("mongodb+srv://"+process.env.DB_USERNAME+":"+process.env.DB_PASSWORD+"@"+process.env.DB_URL+"/nativeapp?retryWrites=true&w=majority").then( ()=>
  console.log("Connected to mongoDB"),
  (error) => console.log("Failed to connect to mongodb. Reason: ", error)
 )
