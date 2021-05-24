@@ -154,6 +154,18 @@ app.post("/login", (req,res) => {
 
 })
 
+app.post("logout", (req, res) => {
+    if(!req.headers.token){
+        return res.status(404).json({message:"Not found"})
+    }
+    sessionModel.deleteOne({"token":req.headers.token}, function(err){
+        if(err){
+            console.log("Failed to remove session in logout. Reason:", err);
+        }
+        return res.status(200).json({message:"Logged out"});
+    })
+})
+
 
 app.listen(process.env.PORT || 3009)
 console.log(`Running in port ${process.env.PORT}`)
