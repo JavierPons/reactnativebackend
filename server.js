@@ -107,15 +107,12 @@ app.post("/register", (req, res) => {
 
 app.post("/login", (req,res) => {
     if(!req.body){
-        console.log('1')
         return res.status(400).json({message:"Bad Request 1"});
     }
     if(!req.body.password || !req.body.username){
-        console.log('2')
         return res.status(400).json({message:"Bad Request 2"})
     }
     if(req.body.username.length < 4 || req.body.password.length < 8){
-        console.log('3')
         return res.status(400).json({message:"Bad Request 3"})
     }
 
